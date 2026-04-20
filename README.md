@@ -43,7 +43,7 @@ task-manager/
 
 ### Option 1 — Open Locally
 
-1. Download `index.html`
+1. Download `task-manager.html`
 2. Double-click to open it in any browser
 3. No installation or server needed
 
