@@ -23,7 +23,7 @@ A lightweight, single-file Task Manager web application built with plain HTML, C
 |------------|---------------------|
 | Markup     | HTML5               |
 | Styling    | CSS3                |
-| Logic      | Vanilla JavaScript  |
+| Logic      | JavaScript          |
 | Storage    | In-memory (runtime) |
 | Hosting    | GitHub Pages        |
 
