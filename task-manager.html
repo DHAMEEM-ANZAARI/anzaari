@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #e6f2ff;
+    }
+
+    /* PAGE SECTIONS */
+    .page { display: none; }
+    .page.active { display: flex; }
+
+    /*CENTER CONTAINERS*/
+    #authPage {
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      gap: 40px;
+    }
+
+    #dashboardPage {
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* CARD BOX  */
+    .box, .dashboard-box {
+      background: #ffffff;
+      padding: 30px;
+      width: 350px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+    }
+
+    /* FIX: Removed inline style overrides; using classes only */
+    .auth-btn {
+      background: blueviolet;
+    }
+    .auth-btn:hover {
+      background: #5a00d4;
+    }
+
+    .add-btn { background: #4da6ff; }
+    .add-btn:hover { background: #3399ff; }
+
+    .view-btn { background: #3399ff; }
+    .view-btn:hover { background: #1a8cff; }
+
+    .logout-btn { background: #dc3545; }
+    .logout-btn:hover { background: #b02a37; }
+
+    /* TASK LIST  */
+    #taskList {
+      padding: 0;
+      margin-top: 15px;
+      text-align: left;
+    }
+
+    #taskList li {
+      list-style: none;
+      background: #f0f0f0;
+      margin: 8px 0;
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: blue;
+    }
+
+    .delete-btn {
+      width: auto;
+      padding: 8px 12px;
+      font-size: 12px;
+      background: #dc3545;
+      border-radius: 5px;
+      margin-top: 0;
+    }
+    .delete-btn:hover { background: #b02a37; }
+
+    .msg { font-size: 14px; margin-top: 8px; min-height: 18px; }
+    .msg.error { color: #dc3545; }
+    .msg.success { color: green; }
+
+    .link-btn {
+      background: none;
+      border: none;
+      color: blueviolet;
+      font-size: 13px;
+      font-weight: normal;
+      cursor: pointer;
+      padding: 4px 0;
+      margin-top: 6px;
+      text-decoration: underline;
+      width: auto;
+    }
+    .link-btn:hover { color: #5a00d4; }
+
+    #forgotPage {
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== AUTH PAGE ===== -->
+<div id="authPage" class="page active">
+
+  <!-- Register -->
+  <div class="box">
+    <h2>Register</h2>
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regPassword" placeholder="Password">
+    <button class="auth-btn" onclick="register()">Register</button>
+    <div id="regMsg" class="msg"></div>
+  </div>
+
+  <!-- Login -->
+  <div class="box">
+    <h2>Login</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button class="auth-btn" onclick="login()">Login</button>
+    <div id="loginMsg" class="msg"></div>
+    <button class="link-btn" onclick="showPage('forgotPage')">Forgot Password?</button>
+  </div>
+
+</div>
+
+<!-- ===== FORGOT PASSWORD PAGE ===== -->
+<div id="forgotPage" class="page">
+  <div class="box">
+    <h2>Reset Password</h2>
+    <input type="email" id="forgotEmail" placeholder="Registered Email">
+    <input type="password" id="newPassword" placeholder="New Password">
+    <input type="password" id="confirmPassword" placeholder="Confirm New Password">
+    <button class="auth-btn" onclick="resetPassword()">Reset Password</button>
+    <div id="forgotMsg" class="msg"></div>
+    <button class="link-btn" onclick="showPage('authPage')">&#8592; Back to Login</button>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD PAGE ===== -->
+<div id="dashboardPage" class="page">
+  <div class="dashboard-box">
+    <h2>Task Manager</h2>
+    <p id="welcomeMsg" style="color:#555; margin-bottom:16px;"></p>
+
+    <input type="text" id="taskInput" placeholder="Enter task">
+    <button class="add-btn" onclick="addTask()">Add Task</button>
+    <button class="view-btn" onclick="displayTasks()">View Tasks</button>
+
+    <ul id="taskList"></ul>
+
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<script>
+  
+  const users = {};   // { email: password }
+  const taskStore = {};  // { email: [ {text, completed} ] }
+  let currentUser = null;
+
+  
+  function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+  }
+
+  //  USER AUTH
+
+  function register() {
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value.trim();
+    const msg = document.getElementById("regMsg");
+
+    if (!email || !password) {
+      msg.textContent = "Please enter all details.";
+      msg.className = "msg error";
+      return;
+    }
+
+    
+    if (users[email]) {
+      msg.textContent = "User already exists.";
+      msg.className = "msg error";
+      return;
+    }
+
+    users[email] = password;
+    taskStore[email] = [];
+
+    msg.textContent = "Registered successfully! You can now log in.";
+    msg.className = "msg success";
+    document.getElementById("regEmail").value = "";
+    document.getElementById("regPassword").value = "";
+  }
+
+  function login() {
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    const msg = document.getElementById("loginMsg");
+
+    
+    if (users[email] && users[email] === password) {
+      currentUser = email;
+      document.getElementById("welcomeMsg").textContent = "Logged in as: " + email;
+      msg.textContent = "";
+      showPage("dashboardPage");
+      displayTasks();
+    } else {
+      msg.textContent = "Invalid email or password.";
+      msg.className = "msg error";
+    }
+  }
+
+  function resetPassword() {
+    const email = document.getElementById("forgotEmail").value.trim();
+    const newPass = document.getElementById("newPassword").value.trim();
+    const confirmPass = document.getElementById("confirmPassword").value.trim();
+    const msg = document.getElementById("forgotMsg");
+
+    if (!email || !newPass || !confirmPass) {
+      msg.textContent = "Please fill in all fields.";
+      msg.className = "msg error";
+      return;
+    }
+
+    if (!users[email]) {
+      msg.textContent = "No account found with that email.";
+      msg.className = "msg error";
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      msg.textContent = "Passwords do not match.";
+      msg.className = "msg error";
+      return;
+    }
+
+    users[email] = newPass;
+    msg.textContent = "Password reset successfully! You can now log in.";
+    msg.className = "msg success";
+
+    document.getElementById("forgotEmail").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("confirmPassword").value = "";
+
+    setTimeout(() => {
+      msg.textContent = "";
+      showPage("authPage");
+    }, 2000);
+  }
+
+  function logout() {
+    currentUser = null;
+    document.getElementById("loginEmail").value = "";
+    document.getElementById("loginPassword").value = "";
+    document.getElementById("loginMsg").textContent = "";
+    showPage("authPage");
+  }
+
+  // TASK FUNCTIONS 
+
+  function getTasks() {
+    if (!currentUser) return [];
+    return taskStore[currentUser] || [];
+  }
+
+  function addTask() {
+    const input = document.getElementById("taskInput");
+    const text = input.value.trim();
+
+    if (!text) {
+      alert("Please enter a task.");
+      return;
+    }
+
+    getTasks().push({ text: text, completed: false });
+
+    input.value = "";
+    input.focus();
+    displayTasks();
+  }
+
+  function toggleTask(index) {
+    const tasks = getTasks();
+    tasks[index].completed = !tasks[index].completed;
+    displayTasks();
+  }
+
+  function deleteTask(index) {
+    const tasks = getTasks();
+    tasks.splice(index, 1);
+    displayTasks();
+  }
+
+  function displayTasks() {
+    const list = document.getElementById("taskList");
+    if (!list) return;
+
+    list.innerHTML = "";
+    const tasks = getTasks();
+
+    if (tasks.length === 0) {
+      list.innerHTML = "<li style='background:none; color:#888; justify-content:center;'>No tasks yet.</li>";
+      return;
+    }
+
+    tasks.forEach((task, index) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="task-left">
+          <input type="checkbox"
+            ${task.completed ? "checked" : ""}
+            onchange="toggleTask(${index})">
+          <span class="${task.completed ? 'completed' : ''}">${escapeHtml(task.text)}</span>
+        </div>
+        <button class="delete-btn" onclick="deleteTask(${index})">Delete</button>
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const taskInput = document.getElementById("taskInput");
+    if (taskInput) {
+      taskInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") addTask();
+      });
+    }
+  });
+</script>
+</body>
+</html>
