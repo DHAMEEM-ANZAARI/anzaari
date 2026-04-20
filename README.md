@@ -12,8 +12,6 @@ A lightweight, single-file Task Manager web application built with plain HTML, C
 - **Mark Complete** — Check off tasks with a checkbox (strikethrough effect)
 - **Delete Tasks** — Remove individual tasks with a Delete button
 - **Logout** — Safely end your session
-- **XSS Protection** — All task input is HTML-escaped before rendering
-- **Per-user Task Isolation** — Each user sees only their own tasks
 
 ---
 
